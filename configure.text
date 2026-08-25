@@ -1,0 +1,667 @@
+============================================================
+        LAW OFFICE NETWORK - CISCO PACKET TRACER LAB
+                    CONFIGURATION FILE
+============================================================
+
+Project:
+Small Enterprise Law Office Network
+
+Main Technologies:
+- VLAN
+- Inter-VLAN Routing
+- Layer 3 Switching
+- DHCP
+- Trunking
+- Voice VLAN
+- Cisco CME
+- Static Routing
+- Extended ACL
+- SSH Management
+- Network Troubleshooting
+
+============================================================
+1. VLAN DESIGN
+============================================================
+
+VLAN 10  - ATTORNEYS
+Network  - 192.168.10.0/24
+Gateway  - 192.168.10.1
+
+VLAN 20  - PARALEGAL
+Network  - 192.168.20.0/24
+Gateway  - 192.168.20.1
+
+VLAN 30  - RECEPTION
+Network  - 192.168.30.0/24
+Gateway  - 192.168.30.1
+
+VLAN 40  - PRINTER
+Network  - 192.168.40.0/24
+Gateway  - 192.168.40.1
+
+VLAN 50  - GUEST-WIFI
+Network  - 192.168.50.0/24
+Gateway  - 192.168.50.1
+
+VLAN 60  - VOICE
+Network  - 192.168.60.0/24
+Gateway  - 192.168.60.1
+
+VLAN 99  - MANAGEMENT
+Network  - 192.168.99.0/24
+Gateway  - 192.168.99.1
+
+
+============================================================
+2. L3 SWITCH - L3_SW1
+============================================================
+
+enable
+configure terminal
+
+hostname L3_SW1
+
+!
+! Enable Layer 3 Routing
+!
+
+ip routing
+
+!
+! Routed link toward EDGE_R
+!
+
+interface GigabitEthernet1/0/1
+ no switchport
+ ip address 10.0.0.2 255.255.255.252
+ no shutdown
+exit
+
+!
+! Trunk toward Access Switch
+!
+
+interface GigabitEthernet1/0/2
+ description TRUNK-TO-ACCESS-SW1
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50,60,99
+ no shutdown
+exit
+
+
+============================================================
+3. VLAN CONFIGURATION - L3_SW1
+============================================================
+
+vlan 10
+ name ATTORNEYS
+exit
+
+vlan 20
+ name PARALEGAL
+exit
+
+vlan 30
+ name RECEPTION
+exit
+
+vlan 40
+ name PRINTER
+exit
+
+vlan 50
+ name GUEST-WIFI
+exit
+
+vlan 60
+ name VOICE
+exit
+
+vlan 99
+ name MANAGEMENT
+exit
+
+
+============================================================
+4. SVI / DEFAULT GATEWAYS
+============================================================
+
+interface vlan 10
+ description ATTORNEYS-GATEWAY
+ ip address 192.168.10.1 255.255.255.0
+ no shutdown
+exit
+
+interface vlan 20
+ description PARALEGAL-GATEWAY
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+exit
+
+interface vlan 30
+ description RECEPTION-GATEWAY
+ ip address 192.168.30.1 255.255.255.0
+ no shutdown
+exit
+
+interface vlan 40
+ description PRINTER-GATEWAY
+ ip address 192.168.40.1 255.255.255.0
+ no shutdown
+exit
+
+interface vlan 50
+ description GUEST-WIFI-GATEWAY
+ ip address 192.168.50.1 255.255.255.0
+ no shutdown
+exit
+
+interface vlan 60
+ description VOICE-GATEWAY
+ ip address 192.168.60.1 255.255.255.0
+ no shutdown
+exit
+
+interface vlan 99
+ description MANAGEMENT-GATEWAY
+ ip address 192.168.99.1 255.255.255.0
+ no shutdown
+exit
+
+
+============================================================
+5. DHCP CONFIGURATION - L3_SW1
+============================================================
+
+!
+! Exclude gateway and reserved addresses
+!
+
+ip dhcp excluded-address 192.168.10.1 192.168.10.20
+ip dhcp excluded-address 192.168.20.1 192.168.20.20
+ip dhcp excluded-address 192.168.30.1 192.168.30.20
+ip dhcp excluded-address 192.168.40.1 192.168.40.20
+ip dhcp excluded-address 192.168.50.1 192.168.50.20
+ip dhcp excluded-address 192.168.60.1 192.168.60.20
+
+
+!
+! ATTORNEYS
+!
+
+ip dhcp pool ATTORNEYS
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1
+ dns-server 0.0.0.0
+exit
+
+
+!
+! PARALEGAL
+!
+
+ip dhcp pool PARALEGAL
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1
+ dns-server 0.0.0.0
+exit
+
+
+!
+! RECEPTION
+!
+
+ip dhcp pool RECEPTION
+ network 192.168.30.0 255.255.255.0
+ default-router 192.168.30.1
+ dns-server 0.0.0.0
+exit
+
+
+!
+! PRINTER
+!
+
+ip dhcp pool PRINTER
+ network 192.168.40.0 255.255.255.0
+ default-router 192.168.40.1
+ dns-server 0.0.0.0
+exit
+
+
+!
+! GUEST WIFI
+!
+
+ip dhcp pool GUEST-WIFI
+ network 192.168.50.0 255.255.255.0
+ default-router 192.168.50.1
+ dns-server 0.0.0.0
+exit
+
+
+!
+! VOICE
+!
+
+ip dhcp pool VOICE
+ network 192.168.60.0 255.255.255.0
+ default-router 192.168.60.1
+ option 150 ip 10.0.0.1
+exit
+
+
+============================================================
+6. ACCESS SWITCH - ACCESS-SW1
+============================================================
+
+enable
+configure terminal
+
+hostname ACCESS-SW1
+
+
+!
+! VLANs
+!
+
+vlan 10
+ name ATTORNEYS
+exit
+
+vlan 20
+ name PARALEGAL
+exit
+
+vlan 30
+ name RECEPTION
+exit
+
+vlan 40
+ name PRINTER
+exit
+
+vlan 50
+ name GUEST-WIFI
+exit
+
+vlan 60
+ name VOICE
+exit
+
+vlan 99
+ name MANAGEMENT
+exit
+
+
+============================================================
+7. ACCESS PORT CONFIGURATION
+============================================================
+
+!
+! ATTORNEYS + IP PHONES
+! Fa0/1 - Fa0/3
+!
+
+interface range fa0/1 - 3
+ switchport mode access
+ switchport access vlan 10
+ switchport voice vlan 60
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+
+!
+! PARALEGAL
+!
+
+interface fa0/4
+ switchport mode access
+ switchport access vlan 20
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+
+!
+! RECEPTION
+!
+
+interface fa0/5
+ switchport mode access
+ switchport access vlan 30
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+
+!
+! PRINTER
+!
+
+interface fa0/6
+ switchport mode access
+ switchport access vlan 40
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+
+!
+! GUEST WIFI
+!
+
+interface fa0/7
+ switchport mode access
+ switchport access vlan 50
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+exit
+
+
+============================================================
+8. ACCESS SWITCH TRUNK
+============================================================
+
+!
+! Uplink toward L3_SW1
+! Gi0/2
+!
+
+interface gigabitEthernet0/2
+ description TRUNK-TO-L3_SW1
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50,60,99
+ no shutdown
+exit
+
+
+============================================================
+9. MANAGEMENT VLAN / SSH
+============================================================
+
+!
+! L3_SW1 Management SVI
+!
+
+interface vlan 99
+ ip address 192.168.99.1 255.255.255.0
+ no shutdown
+exit
+
+
+!
+! SSH Configuration
+!
+
+ip domain-name lawoffice.local
+
+username jihad privilege 15 secret CHANGE_THIS_PASSWORD
+
+crypto key generate rsa
+
+ip ssh version 2
+
+line vty 0 4
+ login local
+ transport input ssh
+exit
+
+
+============================================================
+10. EDGE ROUTER - EDGE_R
+============================================================
+
+enable
+configure terminal
+
+hostname EDGE_R
+
+
+!
+! Interface toward L3_SW1
+!
+
+interface FastEthernet0/1
+ ip address 10.0.0.1 255.255.255.252
+ no shutdown
+exit
+
+
+!
+! Local / WAN-facing interface
+!
+
+interface FastEthernet0/0
+ ip address 10.10.0.1 255.255.255.0
+ no shutdown
+exit
+
+
+============================================================
+11. STATIC ROUTING - EDGE_R
+============================================================
+
+!
+! Route toward internal VLAN networks
+!
+
+ip route 192.168.0.0 255.255.255.0 10.0.0.2
+
+!
+! Voice VLAN route
+!
+
+ip route 192.168.60.0 255.255.255.0 10.0.0.2
+
+
+============================================================
+12. CISCO CME / IP TELEPHONY
+============================================================
+
+telephony-service
+ max-ephones 5
+ max-dn 5
+ ip source-address 10.0.0.1 port 2000
+ auto assign 1 to 5
+exit
+
+
+============================================================
+13. IP PHONE EXTENSIONS
+============================================================
+
+ephone-dn 1
+ number 1001
+exit
+
+ephone-dn 2
+ number 1002
+exit
+
+ephone-dn 3
+ number 1003
+exit
+
+ephone-dn 4
+ number 1004
+exit
+
+ephone-dn 5
+ number 1005
+exit
+
+
+============================================================
+14. GUEST VLAN ACL
+============================================================
+
+!
+! Goal:
+! Guest VLAN 50 cannot access internal
+! 192.168.x.x networks.
+!
+! Guest is allowed to reach 10.0.0.1.
+!
+
+ip access-list extended GUEST_RESTRICTION
+
+ permit ip 192.168.50.0 0.0.0.255 host 10.0.0.1
+
+ deny ip 192.168.50.0 0.0.0.255 192.168.0.0 0.255.255.255
+
+ permit ip any any
+
+exit
+
+
+!
+! Apply ACL inbound on Guest SVI
+!
+
+interface vlan 50
+ ip access-group GUEST_RESTRICTION in
+exit
+
+
+============================================================
+15. SSH LOGIN
+============================================================
+
+!
+! From Management PC:
+!
+
+ssh -l jihad 192.168.99.1
+
+
+============================================================
+16. VERIFICATION COMMANDS
+============================================================
+
+!
+! VLAN verification
+!
+show vlan brief
+!
+! Trunk verification
+!
+show interfaces trunk
+!
+! Access port verification
+!
+show interfaces fa0/6 switchport
+!
+! Interface / SVI verification
+!
+show ip interface brief
+!
+! Routing table
+!
+show ip route
+
+!
+! DHCP leases
+!
+show ip dhcp binding
+!
+! ACL verification
+!
+show access-lists
+!
+! SSH verification
+!
+show ip ssh
+!
+! Connectivity testing
+!
+ping 192.168.10.1
+ping 192.168.20.1
+ping 192.168.30.1
+ping 192.168.40.1
+ping 192.168.50.1
+ping 192.168.60.1
+ping 192.168.99.1
+ping 10.0.0.1
+============================================================
+17. TROUBLESHOOTING PERFORMED
+============================================================
+
+Problem 1:
+PC could not communicate with Printer.
+
+Checks performed:
+
+show interfaces fa0/6 switchport
+show interfaces trunk
+show ip interface brief
+show ip route
+
+Root cause:
+Layer 3 routing was not enabled on L3_SW1.
+
+Solution:
+
+ip routing
+------------------------------------------------------------
+
+Problem 2:
+EDGE_R could not ping IP Phone 192.168.60.21.
+
+Root cause:
+EDGE_R did not have a route toward the Voice VLAN.
+
+Solution:
+
+ip route 192.168.60.0 255.255.255.0 10.0.0.2
+
+After adding the route:
+
+ping 192.168.60.21
+
+Successful.
+
+
+------------------------------------------------------------
+
+Problem 3:
+IP Phones received IP addresses but did not initially
+receive expected phone connectivity.
+
+Checks performed:
+
+show ip dhcp binding
+
+Verified:
+
+192.168.60.x addresses were assigned.
+
+Voice DHCP pool included:
+
+option 150 ip 10.0.0.1
+
+CME was configured on EDGE_R with:
+
+ip source-address 10.0.0.1 port 2000
+
+
+------------------------------------------------------------
+
+Problem 4:
+SSH connection timed out.
+
+Troubleshooting approach:
+
+1. Check VLAN 99
+2. Check Management SVI
+3. Check trunk
+4. Check Management PC IP
+5. Ping 192.168.99.1
+6. Verify SSH configuration
+
+SSH command:
+
+ssh -l jihad 192.168.99.1
+
+
