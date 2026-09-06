@@ -1,4 +1,6 @@
 # Law Office Network — Cisco Routing, VLAN & Security Lab
+![Network Topology](topology.png)
+
 
 A realistic small-office network lab built in Cisco Packet Tracer to practice
 VLAN segmentation, Layer 3 routing, DHCP, IP telephony, static routing,
